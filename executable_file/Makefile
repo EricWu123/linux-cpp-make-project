@@ -9,19 +9,20 @@ EXEC_FILE := $(BUILD_DIR)/app
 SHARED_LIB := $(BUILD_DIR)/libfoo.so
 
 # 指定源文件所在目录
-SRC_DIRS := ./src ./src/module_a ./src/module_b ./src/common ./src/libfoo ./src/libfoo/submodule_a
-INCLUDE_DIR := ./include
+SRC_DIRS := src
+LIB_SRC_DIRS := src/libfoo
+INCLUDE_DIR := include
 
 # 查找所有源文件
-CSrcs := $(foreach dir, $(SRC_DIRS), $(wildcard $(dir)/*.c))
-CppSrcs := $(foreach dir, $(SRC_DIRS), $(wildcard $(dir)/*.cpp))
+CSrcs := $(foreach dir, $(SRC_DIRS), $(shell find $(dir) -name *.c))
+CppSrcs := $(foreach dir, $(SRC_DIRS), $(shell find $(dir) -name *.cpp))
 
 # 保持目录结构的对象文件路径
 Objects := $(patsubst %.c, $(OBJ_DIR)/%.o, $(CSrcs)) $(patsubst %.cpp, $(OBJ_DIR)/%.o, $(CppSrcs))
 # 从对象中过滤掉libfoo目录下的所有对象
-ExecObjects := $(filter-out $(OBJ_DIR)/./src/libfoo/%, $(Objects))
+ExecObjects := $(filter-out $(OBJ_DIR)/$(LIB_SRC_DIRS)/%, $(Objects))
 # 从对象中过滤出libfoo目录下的所有对象
-LibObjects := $(filter $(OBJ_DIR)/./src/libfoo/%, $(Objects))
+LibObjects := $(filter $(OBJ_DIR)/$(LIB_SRC_DIRS)/%, $(Objects))
 
 # 保持目录结构的依赖文件路径
 CDeps := $(patsubst %.c, $(OBJ_DIR)/%.d, $(CSrcs))
@@ -41,12 +42,12 @@ EXEC_LDFLAGS := $(LDFLAGS) -Wl,-rpath=$(TOP_DIR)/build -L. -L$(TOP_DIR)/$(dir $(
 all: $(EXEC_FILE) $(SHARED_LIB)
 
 $(EXEC_FILE): $(ExecObjects) $(SHARED_LIB)
-	@echo $(ExecObjects)
+	@echo "ExecObjects: "$(ExecObjects)
 	@mkdir -p $(dir $@)
 	$(CXX) $(filter-out $(SHARED_LIB), $^) -o $@ $(EXEC_LDFLAGS) 
 
 $(SHARED_LIB): $(LibObjects)
-	@echo $(LibObjects)
+	@echo "LibObjects: "$(LibObjects)
 	@mkdir -p $(dir $@)
 	$(CXX) $^ -o $@ $(LDFLAGS) -shared
 

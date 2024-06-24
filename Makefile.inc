@@ -31,13 +31,18 @@ LDFLAGS += -lpthread -ldl -lrt -lm
 .PHONY: all
 all: $(TARGET) 
 
-$(TARGET): $(Objects)
+$(TARGET): $(Objects) $(DEPENDS)
 	@echo "Objects: "$(Objects)
 	@echo "BUILD_DIR: "$(BUILD_DIR)
 	@echo "TARGET: "$(TARGET)
 
 	@mkdir -p $(dir $@)
 	$(CXX) $(Objects) -o $@ $(LDFLAGS)
+
+$(DEPENDS):
+	@for dir in $(DEPENDS_DIRS); do \
+		$(MAKE) -C $$dir; \
+	done
 
 # 包含依赖文件
 -include $(ObjectsDeps)
